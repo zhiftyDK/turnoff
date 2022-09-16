@@ -1,0 +1,28 @@
+{
+    "name": "turnoff",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "start": "nodemon index.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/zhiftyDK/turnoff.git"
+    },
+    "author": "CodeZhifty",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/zhiftyDK/turnoff/issues"
+    },
+    "homepage": "https://github.com/zhiftyDK/turnoff#readme",
+    "dependencies": {
+        "ejs": "^3.1.8",
+        "express": "^4.18.1",
+        "find-my-iphone": "^1.1.2",
+        "nedb": "^1.8.0"
+    },
+    "devDependencies": {
+        "nodemon": "^2.0.19"
+    }
+}
