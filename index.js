@@ -2,6 +2,8 @@ const express = require("express");
 const app = express();
 const icloud = require("find-my-iphone").findmyphone;
 const Datastore = require("nedb");
+const cors = require("cors");
+var ip = require("ip");
 
 //Assign and load local device database
 const devicesDB = new Datastore("devices.db");
@@ -9,13 +11,26 @@ devicesDB.loadDatabase();
 
 app.set("view engine", "ejs");
 app.use(express.json());
+app.use(cors());
+
+let deviceTable = [];
+devicesDB.find({}, (err, output) => {
+    output.forEach(device => {
+        deviceTable.push({
+            appleid: device.appleid,
+            device: device.device,
+            InBarrier: true
+        });
+    });
+});
 
 app.get("/", (req, res) => {
-    res.render("index", {text: "pølse"});
+    res.render("index", { ipAddress:ip.address(), deviceTable:JSON.stringify(deviceTable)});
 });
 
 //Add a device to the database
 app.post("/addDevice", (req, res) => {
+    console.log(req.body);
     getDevices(req.body.appleid, req.body.password)
     .then(device => {
         if (device) {
@@ -32,8 +47,27 @@ app.post("/addDevice", (req, res) => {
             res.send({added: false, error: "FindmyIphone is not enabled on any of the devices attatched to this appleid!"});
         }
     });
+});
 
-})
+//Check if in circle
+function calculateRadius(radius, latitude, longitude, myLocationX, myLocationY) {
+    //Create Radius of home location
+    const coef = radius / 111320;
+    const xSlut = longitude + coef / Math.cos(latitude * 0.01745);
+    const xStart = longitude - coef / Math.cos(latitude * 0.01745);
+    const ySlut = latitude + coef;
+    const yStart = latitude - coef;
+    const deltaX = xSlut - xStart;
+    const detlaY = ySlut - yStart;
+
+    //Check if member is inside location
+    if(xStart < myLocationX && xSlut > myLocationX) {
+        if(yStart < myLocationY && ySlut > myLocationY) {
+            //Tænd forhelvede lyset
+            console.log("Turn the lights on!");
+        }
+    }
+}
 
 //Update the location of all devices in the database
 function updateLocation() {
@@ -56,9 +90,9 @@ function updateLocation() {
     })
 }
 
-setInterval(() => {
-    updateLocation();
-}, 1000 * 60 * 5);
+// setInterval(() => {
+//     updateLocation();
+// }, 1000 * 60 * 5);
 
 //Get all devices attatched to appleid with findmyiphone enabled
 function getDevices(appleid, password) {
@@ -82,5 +116,5 @@ function getDevices(appleid, password) {
 }
 
 app.listen(3000, () => {
-    console.log("App started on http://localhost:3000");
+    console.log(`App started on http://${ip.address()}:3000`);
 });

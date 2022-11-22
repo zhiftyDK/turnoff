@@ -17,9 +17,11 @@
     },
     "homepage": "https://github.com/zhiftyDK/turnoff#readme",
     "dependencies": {
+        "cors": "^2.8.5",
         "ejs": "^3.1.8",
         "express": "^4.18.1",
         "find-my-iphone": "^1.1.2",
+        "ip": "^1.1.8",
         "nedb": "^1.8.0"
     },
     "devDependencies": {
