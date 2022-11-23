@@ -13,25 +13,49 @@
         .mapboxgl-control-container {
             display: none;
         }
+
+        body::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .marker {
+            background-image: url('/images/circle.png');
+            background-size: cover;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .mapboxgl-popup {
+            max-width: 200px;
+        }
+
+        .mapboxgl-popup-content {
+            text-align: center;
+            font-family: 'Open Sans', sans-serif;
+        }
     </style>
 </head>
-<body>
+<body onload="load()">
     <div class="container-fluid">
-        <div class="row d-flex align-items-center shadow-lg" style="height: 5rem;">
-            <div class="col-2 text-center">
-                <h1>TurnOff</h1>
+        <div class="row d-flex align-items-center shadow" style="height: 5rem;">
+            <div class="col-2 text-start px-5">
+                <h1>TurnOff <i class="fa-solid fa-toggle-off"></i></h1>
             </div>
             <div class="col-10 hstack gap-3 justify-content-end px-5">
-                <button class="btn btn-dark">Hello</button>
-                <button class="btn btn-dark">Hello</button>
-                <button class="btn btn-dark">Hello</button>
-                <button class="btn btn-dark">Hello</button>
+                <div id="lightBulb" style="font-size: 2.5rem;"><i class="fa-regular fa-lightbulb" style="color: gray;"></i></div>
             </div>
         </div>
         <div class="row"></div>
-        <div class="row mt-5">
-            <div class="col-6 d-flex justify-content-center">
-                <div>
+        <div class="row mt-5 px-5">
+            <div class="col-6 d-flex justify-content-end px-5">
+                <div class="w-100">
                     <h5>Location Barrier <i class="fa-solid fa-location-dot"></i></h5>
                     <div class="w-100 d-none d-md-block"></div>
                     <div class="d-flex align-items-center gap-2">
@@ -43,20 +67,21 @@
                     <div id='map' style='width: 100%; height: 50vh;'></div>
                 </div>
             </div>
-            <div class="col-6 d-flex justify-content-center">
-                <div class="w-75">
+            <div class="col-6 d-flex justify-content-start px-5">
+                <div class="w-100">
                     <h5>Connected Devices <i class="fa-solid fa-mobile-screen-button"></i></h5>
                     <div class="d-flex align-items-center gap-2">
                         <input type="text" id="appleid" placeholder="AppleId" class="form-control w-50 my-2">
-                        <input type="text" id="password" placeholder="Password" class="form-control w-25 my-2">
+                        <input type="password" id="password" placeholder="Password" class="form-control w-25 my-2">
                         <button class="btn btn-primary" onclick="addDevice()">Add Device</button>
                     </div>
-                    <table class="table">
+                    <table class="table table-striped border border-secondary">
                         <thead>
                           <tr>
                             <th scope="col">AppleId</th>
                             <th scope="col">Device</th>
                             <th scope="col">InBarrier</th>
+                            <th scope="col"></th>
                           </tr>
                         </thead>
                         <tbody id="deviceTableBody"></tbody>
@@ -67,9 +92,24 @@
     </div>
 
     <script>
-        JSON.parse('<%- deviceTable %>').forEach(device => {
-            document.getElementById("deviceTableBody").innerHTML += `<tr><td scope="row">${device.appleid}</td><td>${device.device}</td><td>True</td></tr>`;
+        //Function than runs on page load
+        function load() {
+            getDevices();
+            getBarrier();
+        }
+
+        setInterval(() => {
+            load();
+        }, 1000 * 60 * 5);
+
+        mapboxgl.accessToken = 'pk.eyJ1IjoiY29kZXpoaWZ0eSIsImEiOiJja3djbWJyZm0xanR3MnFwMnp2cTAyNDBrIn0.QNlyBRhAhJJqX8Yr7tDTfw';
+        const map = new mapboxgl.Map({
+            container: 'map', // container ID
+            style: 'mapbox://styles/codezhifty/clama5fvk000314ohkfa2ziee', // style URL
+            center: [30, 40], // starting position [lng, lat]
+            zoom: 2 // starting zoom
         });
+
         function addDevice() {
             const appleid = document.getElementById("appleid");
             const password = document.getElementById("password");
@@ -91,26 +131,129 @@
                     } else {
                         console.log(data.error);
                     }
-                    window.location.reload();
+                    getDevices();
                 });
             }
         }
 
-        mapboxgl.accessToken = 'pk.eyJ1IjoiY29kZXpoaWZ0eSIsImEiOiJja3djbWJyZm0xanR3MnFwMnp2cTAyNDBrIn0.QNlyBRhAhJJqX8Yr7tDTfw';
-        const map = new mapboxgl.Map({
-            container: 'map', // container ID
-            style: 'mapbox://styles/codezhifty/clama5fvk000314ohkfa2ziee', // style URL
-            center: [30, 40], // starting position [lng, lat]
-            zoom: 2 // starting zoom
-        });
+        function getDevices() {
+            document.getElementById("deviceTableBody").innerHTML = "";
+            fetch("http://<%=ipAddress%>:3000/getDevices")
+            .then(response => response.json())
+            .then(data => {
+                if(typeof data.error == "undefined") {
+                    if(data.some(e => e.insideBarrier == true)) {
+                        document.getElementById("lightBulb").innerHTML = '<i class="fa-solid fa-lightbulb" style="color: gold;"></i>';
+                    } else {
+                        document.getElementById("lightBulb").innerHTML = '<i class="fa-regular fa-lightbulb" style="color: gray;"></i>';
+                    }
 
-        map["scrollZoom"].disable();
-        map["boxZoom"].disable();
-        map["dragRotate"].disable();
-        map["dragPan"].disable();
-        map["keyboard"].disable();
-        map["doubleClickZoom"].disable();
-        map["touchZoomRotate"].disable();
+                    data.forEach(device => {
+                        document.getElementById("deviceTableBody").innerHTML += `<tr><td scope="row">${device.appleid}</td><td>${device.device}</td><td>${device.insideBarrier}</td><td><button style="border: none; color: red;" onclick="deleteDevice('${device.deviceid}')"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
+
+                        const feature = {
+                            type: 'Feature',
+                            geometry: {
+                                type: 'Point',
+                                coordinates: [device.longitude, device.latitude]
+                            },
+                            properties: {
+                                title: device.device,
+                                description: device.appleid
+                            }
+                        }
+
+                        // create a HTML element for each feature
+                        const el = document.createElement('div');
+                        el.className = 'marker';
+
+                        // make a marker for each feature and add to the map
+                        new mapboxgl.Marker(el).setLngLat(feature.geometry.coordinates)
+                        .setPopup(new mapboxgl.Popup({ offset: 25 }) // add popups
+                        .setHTML(`<strong>${feature.properties.title}</strong><p>${feature.properties.description}</p>`))
+                        .addTo(map);
+                    });
+                }
+            });
+        }
+
+        function deleteDevice(deviceid) {
+            fetch("http://<%=ipAddress%>:3000/deleteDevice", {
+                method: "DELETE",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    "deviceid": deviceid,
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.deleted) {
+                    console.log(data.message);
+                }
+                getDevices();
+            });
+        }
+
+        function getBarrier() {
+            fetch("http://<%=ipAddress%>:3000/getBarrier")
+            .then(response => response.json())
+            .then(data => {
+                if(typeof data.error == "undefined") {
+                    function getZoom() {
+                        if(data.radius == 15) {
+                            return 15;
+                        } else if (data.radius > 15) {
+                            return 15 - (data.radius - 15) * 0.1;
+                        } else if(data.radius < 15) {
+                            return (15 - data.radius) * 0.1 + 15
+                        }
+                    }
+
+                    map.flyTo({
+                        center: [data.longitude, data.latitude],
+                        essential: true,
+                        zoom: getZoom()
+                    });
+                    
+                    if(typeof map.getLayer('circle500') !== 'undefined') {
+                        map.removeLayer('circle500').removeSource('source_circle_500');
+                    }
+
+                    map.addSource("source_circle_500", {
+                        "type": "geojson",
+                        "data": {
+                        "type": "FeatureCollection",
+                        "features": [{
+                            "type": "Feature",
+                            "geometry": {
+                            "type": "Point",
+                            "coordinates": [data.longitude, data.latitude]
+                            }
+                        }]
+                        }
+                    });
+
+                    map.addLayer({
+                        "id": "circle500",
+                        "type": "circle",
+                        "source": "source_circle_500",
+                        "paint": {
+                        "circle-radius": {
+                            stops: [
+                            [5, 1],
+                            [15, data.radius * 10]
+                            ],
+                            base: 2
+                        },
+                        "circle-color": "red",
+                        "circle-opacity": 0.6
+                        }
+                    });
+                }
+            });
+        }
 
         function addBarrier() {
             const address = document.getElementById("address");
@@ -171,6 +314,26 @@
                         "circle-opacity": 0.6
                         }
                     });
+
+                    fetch("http://<%=ipAddress%>:3000/addBarrier", {
+                        method: "POST",
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            "longitude": data[0].lon,
+                            "latitude": data[0].lat,
+                            "radius": radius.value
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.added) {
+                            console.log("Barrier has been added!")
+                            getDevices();
+                        }
+                    });
+
                     radius.value = "";
                 });
             }
