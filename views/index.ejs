@@ -132,6 +132,8 @@
                         console.log(data.error);
                     }
                     getDevices();
+                    appleid.value = "";
+                    password.value = "";
                 });
             }
         }
@@ -147,10 +149,13 @@
                     } else {
                         document.getElementById("lightBulb").innerHTML = '<i class="fa-regular fa-lightbulb" style="color: gray;"></i>';
                     }
-
+                } else {
+                    document.getElementById("lightBulb").innerHTML = '<i class="fa-regular fa-lightbulb" style="color: gray;"></i>';
+                }
+                if(typeof data.error == "undefined") {
                     data.forEach(device => {
                         document.getElementById("deviceTableBody").innerHTML += `<tr><td scope="row">${device.appleid}</td><td>${device.device}</td><td>${device.insideBarrier}</td><td><button style="border: none; color: red;" onclick="deleteDevice('${device.deviceid}')"><i class="fa-solid fa-trash-can"></i></button></td></tr>`;
-
+                        
                         const feature = {
                             type: 'Feature',
                             geometry: {
@@ -192,6 +197,7 @@
                 if(data.deleted) {
                     console.log(data.message);
                 }
+                document.querySelector(".marker").remove();
                 getDevices();
             });
         }
@@ -331,10 +337,10 @@
                         if(data.added) {
                             console.log("Barrier has been added!")
                             getDevices();
+                            address.value = "";
+                            radius.value = "";
                         }
                     });
-
-                    radius.value = "";
                 });
             }
         }
