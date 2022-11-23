@@ -34,7 +34,6 @@ app.get("/", (req, res) => {
 
 //Add a device to the database
 app.post("/addDevice", (req, res) => {
-    console.log(req.body);
     getDevices(req.body.appleid, req.body.password)
     .then(device => {
         if (device) {
