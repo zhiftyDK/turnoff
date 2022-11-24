@@ -178,6 +178,8 @@
                         .setHTML(`<strong>${feature.properties.title}</strong><p>${feature.properties.description}</p>`))
                         .addTo(map);
                     });
+                } else {
+                    console.log(data.error);
                 }
             });
         }

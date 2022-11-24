@@ -140,6 +140,8 @@ function checkInsideBarrier(myLocationX, myLocationY) {
                         resolve({insideBarrier: false});
                     }
                 });
+            } else {
+                resolve({insideBarrier: false});
             }
         });
     });
