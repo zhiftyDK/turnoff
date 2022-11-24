@@ -140,6 +140,9 @@
 
         function getDevices() {
             document.getElementById("deviceTableBody").innerHTML = "";
+            if(document.querySelector(".marker")) {
+                document.querySelector(".marker").remove();
+            }
             fetch("http://<%=ipAddress%>:3000/getDevices")
             .then(response => response.json())
             .then(data => {
@@ -199,7 +202,6 @@
                 if(data.deleted) {
                     console.log(data.message);
                 }
-                document.querySelector(".marker").remove();
                 getDevices();
             });
         }
